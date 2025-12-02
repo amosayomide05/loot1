@@ -185,7 +185,8 @@
   }
 
   async function registerUser(index) {
-    const email = `${faker.person.firstName().toLowerCase()}${faker.person.lastName().toLowerCase()}@gmail.com`;
+    //const email = `${faker.person.firstName().toLowerCase()}${faker.person.lastName().toLowerCase()}@gmail.com`;
+    const email = "lemonadelemon952@gmail.com";
     const password = "Raph@11";
     const userAgent = getRandomUserAgent();
     const deviceId = faker.string.uuid();
