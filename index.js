@@ -11,8 +11,8 @@
   const fs = require('fs').promises;
   const CryptoJS = require('crypto-js');
 
-  const TOTAL_ACCOUNTS = 1;
-  const CONCURRENT_LIMIT = 1;
+  const TOTAL_ACCOUNTS = 50;
+  const CONCURRENT_LIMIT = 10;
 
   // Encryption keys
   const KEY1 = 'J8gD4uKpT2rV9ZbQ';
@@ -189,7 +189,7 @@
     const password = "Raph@11";
     const userAgent = getRandomUserAgent();
     const deviceId = faker.string.uuid();
-    const referrerCode = "644HE4W";
+    const referrerCode = "98L18NT";
 
     // Configure proxy agent
     const proxyUrl = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}`;
@@ -237,7 +237,7 @@
             "sec-fetch-site": "same-origin",
             "time": authHeader.time,
             "user-agent": userAgent,
-            "Referer": "https://ttj01.com/register?invite=644HE4W",
+            "Referer": "https://ttj01.com/register?invite=98L18NT",
             "Referrer-Policy": "strict-origin-when-cross-origin"
           },
           httpAgent: proxyAgent,
