@@ -198,7 +198,7 @@
           code: "",
           email_code: "",
           referrer_code: referrerCode,
-          email: "lemonadelemon952@gmail.com",
+          email: email,
           login_pwd: password,
           login_pwd_confirm: password
         },
@@ -235,7 +235,13 @@
       // Login after registration
       const loginData = await loginUser(email, password, userAgent, proxyAgent, index, deviceId, referrerCode);
       
+      console.log(`[+] [${index}] Login response:`, JSON.stringify(loginData, null, 2));
+      
       // Extract authorization info from login response
+      if (!loginData || !loginData.auth_info || !loginData.user_info) {
+        throw new Error('Invalid login response format');
+      }
+      
       const authInfo = loginData.auth_info;
       const uid = loginData.user_info.uid;
       
