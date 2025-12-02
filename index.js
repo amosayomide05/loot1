@@ -67,10 +67,14 @@
   async function loginUser(email, password, userAgent, proxyAgent, index, deviceId, referrerCode) {
     try {
       console.log(`[+] [${index}] Logging in: ${email}`);
+      console.log(`[+] [${index}] Device ID: ${deviceId}`);
+      console.log(`[+] [${index}] Referrer Code: ${referrerCode}`);
       
       await randomDelay(500, 1500);
 
       const authHeader = generateAuthHeader('', '', deviceId, referrerCode);
+      console.log(`[+] [${index}] Login Authorization: ${authHeader.authorization.substring(0, 50)}...`);
+      console.log(`[+] [${index}] Login Time: ${authHeader.time}`);
       
       const loginResponse = await axios.post(
         'https://ttj01.com/common/login/pwd',
@@ -106,6 +110,8 @@
       );
 
       console.log(`[+] [${index}] Login successful: ${email}`);
+      console.log(`[+] [${index}] Login Response Status: ${loginResponse.status}`);
+      console.log(`[+] [${index}] Login Response Data:`, JSON.stringify(loginResponse.data, null, 2));
       return loginResponse.data;
     } catch (error) {
       console.error(`[!] [${index}] Login failed: ${email}`);
@@ -121,10 +127,14 @@
   async function createDeal(authInfo, uid, userAgent, proxyAgent, index, email, deviceId, referrerCode) {
     try {
       console.log(`[+] [${index}] Creating deal for: ${email}`);
+      console.log(`[+] [${index}] Auth Info: ${authInfo}`);
+      console.log(`[+] [${index}] UID: ${uid}`);
       
       await randomDelay(500, 1500);
 
       const authHeader = generateAuthHeader(authInfo, uid, deviceId, referrerCode);
+      console.log(`[+] [${index}] Deal Authorization: ${authHeader.authorization.substring(0, 50)}...`);
+      console.log(`[+] [${index}] Deal Time: ${authHeader.time}`);
       
       const dealResponse = await axios.post(
         'https://ttj01.com/deal/load/create',
@@ -160,6 +170,8 @@
       );
 
       console.log(`[+] [${index}] Deal created successfully: ${email}`);
+      console.log(`[+] [${index}] Deal Response Status: ${dealResponse.status}`);
+      console.log(`[+] [${index}] Deal Response Data:`, JSON.stringify(dealResponse.data, null, 2));
       return dealResponse.data;
     } catch (error) {
       console.error(`[!] [${index}] Deal creation failed: ${email}`);
@@ -185,11 +197,16 @@
 
     try {
       console.log(`[+] [${index}] Registering: ${email}`);
+      console.log(`[+] [${index}] Password: ${password}`);
+      console.log(`[+] [${index}] Device ID: ${deviceId}`);
+      console.log(`[+] [${index}] Referrer Code: ${referrerCode}`);
 
       // Random delay before request
       await randomDelay(500, 2000);
 
       const authHeader = generateAuthHeader('', '', deviceId, referrerCode);
+      console.log(`[+] [${index}] Register Authorization: ${authHeader.authorization.substring(0, 50)}...`);
+      console.log(`[+] [${index}] Register Time: ${authHeader.time}`);
 
       // Send registration request
       const registerResponse = await axios.post(
@@ -231,6 +248,8 @@
 
 
       console.log(`[+] [${index}] Registration successful: ${email}`);
+      console.log(`[+] [${index}] Registration Response Status: ${registerResponse.status}`);
+      console.log(`[+] [${index}] Registration Response Data:`, JSON.stringify(registerResponse.data, null, 2));
       
       // Login after registration
       const loginData = await loginUser(email, password, userAgent, proxyAgent, index, deviceId, referrerCode);
