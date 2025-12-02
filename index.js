@@ -9,9 +9,43 @@
   const axios = require('axios');
   const {HttpsProxyAgent} = require('https-proxy-agent');
   const fs = require('fs').promises;
+  const CryptoJS = require('crypto-js');
 
   const TOTAL_ACCOUNTS = 1;
   const CONCURRENT_LIMIT = 1;
+
+  // Encryption keys
+  const KEY1 = 'J8gD4uKpT2rV9ZbQ';
+  const KEY2 = 'L1hW7gFqP3kM0VbY';
+
+  // Encryption function
+  function encrypt(data) {
+    const key = CryptoJS.enc.Utf8.parse(KEY1);
+    const iv = CryptoJS.enc.Utf8.parse(KEY2);
+    const dataStr = typeof data !== 'string' ? JSON.stringify(data) : data;
+    const encrypted = CryptoJS.AES.encrypt(dataStr, key, {
+      iv: iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    });
+    return encrypted.toString();
+  }
+
+  // Generate authorization header
+  function generateAuthHeader(authInfo, uid, deviceId, referrerCode) {
+    const time = Date.now();
+    const info = {
+      uid: uid || '',
+      token: authInfo || '',
+      time: time,
+      device_id: deviceId || '',
+      referrer_code: referrerCode || ''
+    };
+    return {
+      authorization: encrypt(info),
+      time: time.toString()
+    };
+  }
 
   // Generate random user agent
   function getRandomUserAgent() {
@@ -30,11 +64,13 @@
     return new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * (max - min + 1)) + min));
   }
 
-  async function loginUser(email, password, userAgent, proxyAgent, index) {
+  async function loginUser(email, password, userAgent, proxyAgent, index, deviceId, referrerCode) {
     try {
       console.log(`[+] [${index}] Logging in: ${email}`);
       
       await randomDelay(500, 1500);
+
+      const authHeader = generateAuthHeader('', '', deviceId, referrerCode);
       
       const loginResponse = await axios.post(
         'https://ttj01.com/common/login/pwd',
@@ -46,6 +82,7 @@
           headers: {
             "accept": "application/json, text/plain, */*",
             "accept-language": "en-GB,en;q=0.9,en-US;q=0.8",
+            "authorization": authHeader.authorization,
             "cache-control": "no-cache",
             "content-type": "application/json",
             "lang": "en",
@@ -57,7 +94,7 @@
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
-            "time": Date.now().toString(),
+            "time": authHeader.time,
             "user-agent": userAgent,
             "Referer": "https://ttj01.com/login",
             "Referrer-Policy": "strict-origin-when-cross-origin"
@@ -81,11 +118,13 @@
     }
   }
 
-  async function createDeal(authToken, userAgent, proxyAgent, index, email) {
+  async function createDeal(authInfo, uid, userAgent, proxyAgent, index, email, deviceId, referrerCode) {
     try {
       console.log(`[+] [${index}] Creating deal for: ${email}`);
       
       await randomDelay(500, 1500);
+
+      const authHeader = generateAuthHeader(authInfo, uid, deviceId, referrerCode);
       
       const dealResponse = await axios.post(
         'https://ttj01.com/deal/load/create',
@@ -97,7 +136,7 @@
           headers: {
             "accept": "application/json, text/plain, */*",
             "accept-language": "en-GB,en;q=0.9,en-US;q=0.8",
-            "authorization": authToken,
+            "authorization": authHeader.authorization,
             "cache-control": "no-cache",
             "content-type": "application/json",
             "lang": "en",
@@ -109,7 +148,7 @@
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
-            "time": Date.now().toString(),
+            "time": authHeader.time,
             "user-agent": userAgent,
             "Referer": "https://ttj01.com/deal/confirm",
             "Referrer-Policy": "strict-origin-when-cross-origin"
@@ -137,7 +176,8 @@
     const email = `${faker.person.firstName().toLowerCase()}${faker.person.lastName().toLowerCase()}@gmail.com`;
     const password = "Raph@11";
     const userAgent = getRandomUserAgent();
-    const timestamp = Date.now().toString();
+    const deviceId = faker.string.uuid();
+    const referrerCode = "644HE4W";
 
     // Configure proxy agent
     const proxyUrl = `http://${PROXY_USERNAME}:${PROXY_PASSWORD}@${PROXY_HOST}:${PROXY_PORT}`;
@@ -149,13 +189,15 @@
       // Random delay before request
       await randomDelay(500, 2000);
 
+      const authHeader = generateAuthHeader('', '', deviceId, referrerCode);
+
       // Send registration request
       const registerResponse = await axios.post(
         'https://ttj01.com/common/register/pwd',
         {
           code: "",
           email_code: "",
-          referrer_code: "644HE4W",
+          referrer_code: referrerCode,
           email: email,
           login_pwd: password,
           login_pwd_confirm: password
@@ -164,6 +206,7 @@
           headers: {
             "accept": "application/json, text/plain, */*",
             "accept-language": "en-GB,en;q=0.9,en-US;q=0.8",
+            "authorization": authHeader.authorization,
             "cache-control": "no-cache",
             "content-type": "application/json",
             "lang": "en",
@@ -175,7 +218,7 @@
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
-            "time": timestamp,
+            "time": authHeader.time,
             "user-agent": userAgent,
             "Referer": "https://ttj01.com/register?invite=644HE4W",
             "Referrer-Policy": "strict-origin-when-cross-origin"
@@ -185,17 +228,20 @@
           timeout: 30000
         }
       );
+      console.log(registerResponse)
+
 
       console.log(`[+] [${index}] Registration successful: ${email}`);
       
       // Login after registration
-      const loginData = await loginUser(email, password, userAgent, proxyAgent, index);
+      const loginData = await loginUser(email, password, userAgent, proxyAgent, index, deviceId, referrerCode);
       
-      // Extract authorization token from login response
-      const authToken = loginData.auth_info;
+      // Extract authorization info from login response
+      const authInfo = loginData.auth_info;
+      const uid = loginData.user_info.uid;
       
       // Create deal
-      const dealData = await createDeal(authToken, userAgent, proxyAgent, index, email);
+      const dealData = await createDeal(authInfo, uid, userAgent, proxyAgent, index, email, deviceId, referrerCode);
       
       // Save to acc.txt
       const accountInfo = `${email}:${password}\n`;
