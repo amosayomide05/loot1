@@ -30,8 +30,112 @@
     return new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * (max - min + 1)) + min));
   }
 
+  async function loginUser(email, password, userAgent, proxyAgent, index) {
+    try {
+      console.log(`[+] [${index}] Logging in: ${email}`);
+      
+      await randomDelay(500, 1500);
+      
+      const loginResponse = await axios.post(
+        'https://ttj01.com/common/login/pwd',
+        {
+          email: email,
+          login_pwd: password
+        },
+        {
+          headers: {
+            "accept": "application/json, text/plain, */*",
+            "accept-language": "en-GB,en;q=0.9,en-US;q=0.8",
+            "cache-control": "no-cache",
+            "content-type": "application/json",
+            "lang": "en",
+            "pragma": "no-cache",
+            "priority": "u=1, i",
+            "sec-ch-ua": `"Not A(Brand";v="8", "Chromium";v="${Math.floor(Math.random() * 10) + 120}", "Microsoft Edge";v="${Math.floor(Math.random() * 10) + 120}"`,
+            "sec-ch-ua-mobile": "?1",
+            "sec-ch-ua-platform": "\"Android\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "time": Date.now().toString(),
+            "user-agent": userAgent,
+            "Referer": "https://ttj01.com/login",
+            "Referrer-Policy": "strict-origin-when-cross-origin"
+          },
+          httpAgent: proxyAgent,
+          httpsAgent: proxyAgent,
+          timeout: 30000
+        }
+      );
+
+      console.log(`[+] [${index}] Login successful: ${email}`);
+      return loginResponse.data;
+    } catch (error) {
+      console.error(`[!] [${index}] Login failed: ${email}`);
+      if (error.response) {
+        console.error(`    Status: ${error.response.status}, Data:`, error.response.data);
+      } else {
+        console.error(`    Error: ${error.message}`);
+      }
+      throw error;
+    }
+  }
+
+  async function createDeal(authToken, userAgent, proxyAgent, index, email) {
+    try {
+      console.log(`[+] [${index}] Creating deal for: ${email}`);
+      
+      await randomDelay(500, 1500);
+      
+      const dealResponse = await axios.post(
+        'https://ttj01.com/deal/load/create',
+        {
+          deal_id: 2,
+          money: "10.00"
+        },
+        {
+          headers: {
+            "accept": "application/json, text/plain, */*",
+            "accept-language": "en-GB,en;q=0.9,en-US;q=0.8",
+            "authorization": authToken,
+            "cache-control": "no-cache",
+            "content-type": "application/json",
+            "lang": "en",
+            "pragma": "no-cache",
+            "priority": "u=1, i",
+            "sec-ch-ua": `"Not A(Brand";v="8", "Chromium";v="${Math.floor(Math.random() * 10) + 120}", "Microsoft Edge";v="${Math.floor(Math.random() * 10) + 120}"`,
+            "sec-ch-ua-mobile": "?1",
+            "sec-ch-ua-platform": "\"Android\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "time": Date.now().toString(),
+            "user-agent": userAgent,
+            "Referer": "https://ttj01.com/deal/confirm",
+            "Referrer-Policy": "strict-origin-when-cross-origin"
+          },
+          httpAgent: proxyAgent,
+          httpsAgent: proxyAgent,
+          timeout: 30000
+        }
+      );
+
+      console.log(`[+] [${index}] Deal created successfully: ${email}`);
+      return dealResponse.data;
+    } catch (error) {
+      console.error(`[!] [${index}] Deal creation failed: ${email}`);
+      if (error.response) {
+        console.error(`    Status: ${error.response.status}, Data:`, error.response.data);
+      } else {
+        console.error(`    Error: ${error.message}`);
+      }
+      throw error;
+    }
+  }
+
   async function registerUser(index) {
     const email = `${faker.person.firstName().toLowerCase()}${faker.person.lastName().toLowerCase()}@gmail.com`;
+    const password = "Raph@11";
     const userAgent = getRandomUserAgent();
     const timestamp = Date.now().toString();
 
@@ -46,15 +150,15 @@
       await randomDelay(500, 2000);
 
       // Send registration request
-      const response = await axios.post(
+      const registerResponse = await axios.post(
         'https://ttj01.com/common/register/pwd',
         {
           code: "",
           email_code: "",
           referrer_code: "644HE4W",
           email: email,
-          login_pwd: "Raph@11",
-          login_pwd_confirm: "Raph@11"
+          login_pwd: password,
+          login_pwd_confirm: password
         },
         {
           headers: {
@@ -82,15 +186,24 @@
         }
       );
 
-      console.log(`[+] [${index}] Success: ${email}`);
+      console.log(`[+] [${index}] Registration successful: ${email}`);
+      
+      // Login after registration
+      const loginData = await loginUser(email, password, userAgent, proxyAgent, index);
+      
+      // Extract authorization token from login response
+      const authToken = loginData.auth_info;
+      
+      // Create deal
+      const dealData = await createDeal(authToken, userAgent, proxyAgent, index, email);
       
       // Save to acc.txt
-      const accountInfo = `${email}:Raph@11\n`;
+      const accountInfo = `${email}:${password}\n`;
       await fs.appendFile('acc.txt', accountInfo, 'utf8');
       
-      return { success: true, email, data: response.data };
+      return { success: true, email, registerData: registerResponse.data, loginData, dealData };
     } catch (error) {
-      console.error(`[!] [${index}] Failed: ${email}`);
+      console.error(`[!] [${index}] Process failed for: ${email}`);
       if (error.response) {
         console.error(`    Status: ${error.response.status}, Data:`, error.response.data);
       } else {
