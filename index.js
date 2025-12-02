@@ -198,7 +198,7 @@
           code: "",
           email_code: "",
           referrer_code: referrerCode,
-          email: email,
+          email: "lemonadelemon952@gmail.com",
           login_pwd: password,
           login_pwd_confirm: password
         },
@@ -228,7 +228,6 @@
           timeout: 30000
         }
       );
-      console.log(registerResponse)
 
 
       console.log(`[+] [${index}] Registration successful: ${email}`);
